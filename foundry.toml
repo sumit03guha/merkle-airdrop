@@ -2,7 +2,7 @@
 # The source directory
 src = 'src'
 # The test directory
-test = 'test/foundry'
+test = 'test'
 # The script directory
 script = 'script'
 # The artifact directory
@@ -12,6 +12,7 @@ libs = ['node_modules', 'lib']
 # A list of remappings
 remappings = [
     '@openzeppelin/contracts=lib/openzeppelin-contracts/contracts',
+    'forge-std=lib/forge-std/src'
 ]
 # Whether to autodetect remappings by scanning the `libs` folders recursively
 auto_detect_remappings = true
@@ -30,7 +31,7 @@ include_paths = []
 # Whether to ignore the cache
 force = false
 # The EVM version by hardfork name
-evm_version = 'london'
+evm_version = 'cancun'
 # A list of contracts to output gas reports for
 gas_reports = ['*']
 # A list of contracts to ignore for gas reports
@@ -52,7 +53,7 @@ ignored_error_codes = [1878, 5574]
 # Whether contract build warnings will cause compilation to fail
 deny_warnings = false
 # Configures the permissions of cheat codes that touch the file system
-fs_permissions = []
+fs_permissions = [{ access = 'read-write', path = './' }]
 # Whether to emit additional build info files
 build_info = false
 # Whether to show test progress
