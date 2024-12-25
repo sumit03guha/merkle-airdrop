@@ -4,11 +4,10 @@ pragma solidity 0.8.28;
 
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {MerkleAirdrop__AlreadyClaimed, MerkleAirdrop__InvalidProof} from "./Errors.sol";
 
-contract MerkleAirdrop is Ownable {
+contract MerkleAirdrop {
     using SafeERC20 for IERC20;
 
     bytes32 private _merkleRoot;
@@ -18,7 +17,7 @@ contract MerkleAirdrop is Ownable {
 
     event AirdropClaimed(address claimer, uint256 amount);
 
-    constructor(bytes32 merkleRoot, address token) Ownable(msg.sender) {
+    constructor(bytes32 merkleRoot, address token) {
         _merkleRoot = merkleRoot;
         _airdropToken = IERC20(token);
     }
@@ -42,6 +41,7 @@ contract MerkleAirdrop is Ownable {
 
         _airdropClaimed[claimer] = true;
         _airdropToken.safeTransfer(claimer, amount);
+
         emit AirdropClaimed(claimer, amount);
     }
 
