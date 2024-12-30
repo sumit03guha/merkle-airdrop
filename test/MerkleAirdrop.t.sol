@@ -2,14 +2,17 @@
 
 pragma solidity 0.8.28;
 
-import {Test, console} from "forge-std/Test.sol";
-import {stdJson} from "forge-std/StdJson.sol";
+import { Test, console } from "forge-std/Test.sol";
+import { stdJson } from "forge-std/StdJson.sol";
 
-import {MockToken} from "../src/contracts/MockToken.sol";
-import {MerkleAirdrop} from "../src/contracts/MerkleAirdrop.sol";
-import {GenerateInput} from "../script/GenerateInput.s.sol";
-import {MakeMerkle} from "../script/GenerateMerkle.s.sol";
-import {MerkleAirdrop__AlreadyClaimed, MerkleAirdrop__InvalidProof} from "../src/contracts/Errors.sol";
+import { MockToken } from "../src/contracts/MockToken.sol";
+import { MerkleAirdrop } from "../src/contracts/MerkleAirdrop.sol";
+import { GenerateInput } from "../script/GenerateInput.s.sol";
+import { MakeMerkle } from "../script/GenerateMerkle.s.sol";
+import {
+    MerkleAirdrop__AlreadyClaimed, MerkleAirdrop__InvalidProof
+} from "../src/contracts/Errors.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 contract MerkleAirdropTest is Test {
     using stdJson for string;
@@ -37,10 +40,14 @@ contract MerkleAirdropTest is Test {
 
     address private _deployer = vm.addr(0x1);
     address private _owner = vm.addr(0x2);
+
     bytes32 private _root;
     uint256 private _totalAmountToBeClaimed;
 
     function setUp() external {
+        string memory eip712name = "EIP_712_Test";
+        string memory eip712version = "1";
+
         vm.startPrank(_deployer);
 
         _generateInput = new GenerateInput();
@@ -52,7 +59,7 @@ contract MerkleAirdropTest is Test {
         _deployHelper();
 
         _mockToken = new MockToken();
-        _merkleAirdrop = new MerkleAirdrop(_root, address(_mockToken));
+        _merkleAirdrop = new MerkleAirdrop(eip712name, eip712version, _root, address(_mockToken));
 
         _mockToken.transferOwnership(_owner);
 
@@ -66,16 +73,11 @@ contract MerkleAirdropTest is Test {
         vm.stopPrank();
     }
 
-    function testDeploy() external view {
-        assertEq(_merkleAirdrop.getMerkleRoot(), _root);
-        assertEq(_merkleAirdrop.getAirdropToken(), address(_mockToken));
-    }
-
     function testClaim() external {
         for (uint256 i = 0; i < _dataArray.length; ++i) {
             address claimer = _dataArray[i].claimer;
             uint256 amountToClaim = _dataArray[i].amount;
-            _testClaimHelper(claimer, amountToClaim);
+            _testClaimHelper(claimer, amountToClaim, "", "");
             assertEq(_mockToken.balanceOf(claimer), amountToClaim);
             assertEq(_merkleAirdrop.isAirdropClaimed(claimer), true);
         }
@@ -91,7 +93,7 @@ contract MerkleAirdropTest is Test {
         vm.prank(unauthorizedClaimer);
         vm.expectRevert(MerkleAirdrop__InvalidProof.selector);
 
-        _merkleAirdrop.claim(unauthorizedClaimer, amountToClaim, merkleProof);
+        _merkleAirdrop.claim(unauthorizedClaimer, amountToClaim, merkleProof, "", "");
 
         assertEq(_merkleAirdrop.isAirdropClaimed(unauthorizedClaimer), false);
         assertEq(_merkleAirdrop.isAirdropClaimed(claimer), false);
@@ -106,34 +108,54 @@ contract MerkleAirdropTest is Test {
         assertEq(_mockToken.balanceOf(claimer), 0);
 
         vm.prank(claimer);
-        _merkleAirdrop.claim(claimer, amountToClaim, merkleProof);
+        _merkleAirdrop.claim(claimer, amountToClaim, merkleProof, "", "");
 
         assertEq(_merkleAirdrop.isAirdropClaimed(claimer), true);
 
         vm.expectRevert(MerkleAirdrop__AlreadyClaimed.selector);
-        _merkleAirdrop.claim(claimer, amountToClaim, merkleProof);
+        _merkleAirdrop.claim(claimer, amountToClaim, merkleProof, "", "");
 
         assertEq(_mockToken.balanceOf(claimer), amountToClaim);
     }
 
-    function _testClaimHelper(address claimer, uint256 amountToClaim) private {
+    function testDeploy() external view {
+        assertEq(_merkleAirdrop.getMerkleRoot(), _root);
+        assertEq(_merkleAirdrop.getAirdropToken(), address(_mockToken));
+    }
+
+    function testSignatureVerification() external {
+        (address claimer, uint256 pvKey) = makeAddrAndKey("claimer");
+        address _gasPayer = vm.addr(0x3);
+
+        string memory message = "I approve the gas payer to claim on my behalf";
+        bytes32 digest = _merkleAirdrop.getMessageHash(message, claimer, _gasPayer);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pvKey, digest);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        bool verified = _merkleAirdrop.verifySignature(claimer, _gasPayer, message, signature);
+        assertTrue(verified);
+    }
+
+    function _testClaimHelper(
+        address claimer,
+        uint256 amountToClaim,
+        string memory message,
+        bytes memory signature
+    ) private {
         bytes32[] memory merkleProof = _claimerToProof[claimer];
 
         vm.prank(claimer);
-        _merkleAirdrop.claim(claimer, amountToClaim, merkleProof);
+        _merkleAirdrop.claim(claimer, amountToClaim, merkleProof, message, signature);
     }
 
     function _deployHelper() private {
-        string memory merkleDataJson = vm.readFile(
-            string.concat(vm.projectRoot(), _MERKLE_PATH)
-        );
+        string memory merkleDataJson = vm.readFile(string.concat(vm.projectRoot(), _MERKLE_PATH));
         bytes memory jsonMerkleRoot = merkleDataJson.parseRaw("[0].root");
 
         _root = abi.decode(jsonMerkleRoot, (bytes32));
 
-        string memory data = vm.readFile(
-            string.concat(vm.projectRoot(), _INPUT_DATA_PATH)
-        );
+        string memory data = vm.readFile(string.concat(vm.projectRoot(), _INPUT_DATA_PATH));
 
         bytes memory jsonData = vm.parseJson(data);
         DataJson memory dataJson = abi.decode(jsonData, (DataJson));
@@ -144,9 +166,8 @@ contract MerkleAirdropTest is Test {
             _dataArray.push(dataJson.data[i]);
             _totalAmountToBeClaimed += dataJson.data[i].amount;
 
-            bytes memory jsonProof = merkleDataJson.parseRaw(
-                string.concat("[", vm.toString(i), "].proof")
-            );
+            bytes memory jsonProof =
+                merkleDataJson.parseRaw(string.concat("[", vm.toString(i), "].proof"));
             bytes32[] memory proof = abi.decode(jsonProof, (bytes32[]));
 
             _claimerToProof[dataJson.data[i].claimer] = proof;
