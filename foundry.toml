@@ -89,9 +89,9 @@ extra_output = []
 # Extra output to write to separate files.
 extra_output_files = []
 # Print the names of the compiled contracts
-names = false
+names = true
 # Print the sizes of the compiled contracts
-sizes = false
+sizes = true
 # Whether or not to use the Yul intermediate representation compilation pipeline
 via_ir = true
 # Enables or disables RPC caching when forking
@@ -140,11 +140,11 @@ rpc_endpoints = { optimism = "https://optimism.alchemyapi.io/v2/...", mainnet = 
 
 [fmt]
 # Maximum line length where formatter will try to wrap the line
-line_length = 120
+line_length = 100
 # Number of spaces per indentation level
 tab_width = 4
 # Print spaces between brackets
-bracket_spacing = false
+bracket_spacing = true
 # Style of uint/int256 types
 int_types = "long"
 # If function parameters are multiline then always put the function attributes on separate lines
