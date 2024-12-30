@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.28;
 
-import {Script} from "forge-std/Script.sol";
-import {stdJson} from "forge-std/StdJson.sol";
-import {console} from "forge-std/console.sol";
+import { Script } from "forge-std/Script.sol";
+import { stdJson } from "forge-std/StdJson.sol";
+import { console } from "forge-std/console.sol";
 
 // Merkle tree input file generator script
 contract GenerateInput is Script {
@@ -42,17 +42,13 @@ contract GenerateInput is Script {
     }
 
     function _readData() private view {
-        string memory data = vm.readFile(
-            string.concat(vm.projectRoot(), _INPUT_DATA_PATH)
-        );
+        string memory data = vm.readFile(string.concat(vm.projectRoot(), _INPUT_DATA_PATH));
         bytes memory jsonData = vm.parseJson(data);
         DataJson memory datajson = abi.decode(jsonData, (DataJson));
 
         for (uint256 i = 0; i < datajson.data.length; ++i) {
             console.log(
-                "Address: %s, Amount: %s",
-                datajson.data[i].claimer,
-                datajson.data[i].amount
+                "Address: %s, Amount: %s", datajson.data[i].claimer, datajson.data[i].amount
             );
         }
 
@@ -63,18 +59,13 @@ contract GenerateInput is Script {
         // string memory countString = vm.toString(_count); // convert count to string
         // string memory amountString = vm.toString(_AMOUNT); // convert amount to string
 
-        string memory data = vm.readFile(
-            string.concat(vm.projectRoot(), _INPUT_DATA_PATH)
-        );
+        string memory data = vm.readFile(string.concat(vm.projectRoot(), _INPUT_DATA_PATH));
         bytes memory jsonData = vm.parseJson(data);
         DataJson memory datajson = abi.decode(jsonData, (DataJson));
         string memory countString = vm.toString(datajson.data.length);
 
-        string memory json = string.concat(
-            '{ "types": ["address", "uint"], "count":',
-            countString,
-            ',"values": {'
-        );
+        string memory json =
+            string.concat('{ "types": ["address", "uint"], "count":', countString, ',"values": {');
         for (uint256 i = 0; i < datajson.data.length; ++i) {
             if (i == datajson.data.length - 1) {
                 json = string.concat(

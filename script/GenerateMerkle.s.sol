@@ -2,11 +2,11 @@
 
 pragma solidity 0.8.28;
 
-import {Script} from "forge-std/Script.sol";
-import {stdJson} from "forge-std/StdJson.sol";
-import {console} from "forge-std/console.sol";
-import {Merkle} from "murky/src/Merkle.sol";
-import {ScriptHelper} from "murky/script/common/ScriptHelper.sol";
+import { Script } from "forge-std/Script.sol";
+import { stdJson } from "forge-std/StdJson.sol";
+import { console } from "forge-std/console.sol";
+import { Merkle } from "murky/src/Merkle.sol";
+import { ScriptHelper } from "murky/script/common/ScriptHelper.sol";
 
 // Merkle proof generator script
 // To use:
@@ -23,7 +23,6 @@ import {ScriptHelper} from "murky/script/common/ScriptHelper.sol";
  * @author kootsZhin
  * @notice https://github.com/dmfxyz/murky
  */
-
 contract MakeMerkle is Script, ScriptHelper {
     using stdJson for string; // enables us to use the json cheatcodes for strings
 
@@ -32,8 +31,7 @@ contract MakeMerkle is Script, ScriptHelper {
     string private constant _INPUT_PATH = "/script/target/input.json";
     string private constant _OUTPUT_PATH = "/script/target/output.json";
 
-    string private _elements =
-        vm.readFile(string.concat(vm.projectRoot(), _INPUT_PATH)); // get the absolute path
+    string private _elements = vm.readFile(string.concat(vm.projectRoot(), _INPUT_PATH)); // get the absolute path
     string[] private _types = _elements.readStringArray(".types"); // gets the merkle tree leaf types from json using forge standard lib cheatcode
     uint256 private _count = _elements.readUint(".count"); // get the number of leaf nodes
 
@@ -55,16 +53,12 @@ contract MakeMerkle is Script, ScriptHelper {
 
             for (uint256 j = 0; j < _types.length; ++j) {
                 if (compareStrings(_types[j], "address")) {
-                    address value = _elements.readAddress(
-                        _getValuesByIndex(i, j)
-                    );
+                    address value = _elements.readAddress(_getValuesByIndex(i, j));
                     // you can't immediately cast straight to 32 bytes as an address is 20 bytes so first cast to uint160 (20 bytes) cast up to uint256 which is 32 bytes and finally to bytes32
                     data[j] = bytes32(uint256(uint160(value)));
                     input[j] = vm.toString(value);
                 } else if (compareStrings(_types[j], "uint")) {
-                    uint256 value = vm.parseUint(
-                        _elements.readString(_getValuesByIndex(i, j))
-                    );
+                    uint256 value = vm.parseUint(_elements.readString(_getValuesByIndex(i, j)));
                     data[j] = bytes32(value);
                     input[j] = vm.toString(value);
                 }
@@ -77,9 +71,7 @@ contract MakeMerkle is Script, ScriptHelper {
             // hash the encoded address and amount
             // bytes.concat turns from bytes32 to bytes
             // hash again because preimage attack
-            _leafs[i] = keccak256(
-                bytes.concat(keccak256(ltrim64(abi.encode(data))))
-            );
+            _leafs[i] = keccak256(bytes.concat(keccak256(ltrim64(abi.encode(data)))));
             // Converts a string array into a JSON array string.
             // store the corresponding values/inputs for each leaf node
             _inputs[i] = stringArrayToString(input);
@@ -87,9 +79,7 @@ contract MakeMerkle is Script, ScriptHelper {
 
         for (uint256 i = 0; i < _count; ++i) {
             // get proof gets the nodes needed for the proof & strigify (from helper lib)
-            string memory proof = bytes32ArrayToString(
-                _MERKLE.getProof(_leafs, i)
-            );
+            string memory proof = bytes32ArrayToString(_MERKLE.getProof(_leafs, i));
             // get the root hash and stringify
             string memory root = vm.toString(_MERKLE.getRoot(_leafs));
             // get the specific leaf working on
@@ -111,10 +101,7 @@ contract MakeMerkle is Script, ScriptHelper {
 
     /// @dev Returns the JSON path of the input file
     // output file output ".values.some-address.some-amount"
-    function _getValuesByIndex(
-        uint256 i,
-        uint256 j
-    ) private pure returns (string memory) {
+    function _getValuesByIndex(uint256 i, uint256 j) private pure returns (string memory) {
         return string.concat(".values.", vm.toString(i), ".", vm.toString(j));
     }
 
