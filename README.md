@@ -1,66 +1,60 @@
-## Foundry
+# Merkle Airdrop System
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+The Merkle Airdrop system enables the distribution of tokens via airdrops in a secure and gas-efficient manner using Merkle proofs to verify claims. This repository contains the smart contracts, testing suite, and deployment scripts necessary for setting up and managing a Merkle Airdrop.
 
-Foundry consists of:
+## Features
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+- **Secure Token Distribution**: Uses Merkle proofs to ensure that airdrops are claimed only by eligible addresses.
+- **Gas Efficiency**: Reduces the gas cost by allowing users to prove their token claim without the need for on-chain storage of all possible claimants.
+- **EIP712 Signing**: Implements EIP712 for secure and verifiable signatures.
+- **Comprehensive Tests**: Includes a full suite of tests to ensure functionality and robustness.
+- **Script Automation**: Scripts to generate airdrop input data and Merkle proofs for deployment.
 
-## Documentation
+## Prerequisites
 
-https://book.getfoundry.sh/
+Before you begin, ensure you have the following installed:
+
+- [Foundry](https://book.getfoundry.sh/getting-started/installation.html) for Solidity testing and deployment
+
+## Installation
+
+Clone the repository and install dependencies:
+
+```bash
+git clone https://your-repository-url.git
+cd merkle-airdrop-system
+forge install
+```
 
 ## Usage
 
-### Build
+### Generating Merkle Proofs
 
-```shell
-$ forge build
+Generate input data and Merkle proofs by running:
+
+```bash
+forge script script/GenerateInput.s.sol
+forge script script/MakeMerkle.s.sol
 ```
 
-### Test
+### Running Tests
 
-```shell
-$ forge test
+Execute the tests with Foundry:
+
+```bash
+forge test
 ```
 
-### Format
+## Smart Contracts
 
-```shell
-$ forge fmt
-```
+- **MerkleAirdrop.sol**: Main contract for handling the airdrop.
+- **MockToken.sol**: Mock ERC20 token for testing purposes.
 
-### Gas Snapshots
+## Scripts
 
-```shell
-$ forge snapshot
-```
+- **GenerateInput.s.sol**: Generates the input data for the Merkle tree.
+- **MakeMerkle.s.sol**: Generates the Merkle tree root and proofs from the input data.
 
-### Anvil
+## License
 
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+Distributed under the MIT License. See `LICENSE` for more information.
