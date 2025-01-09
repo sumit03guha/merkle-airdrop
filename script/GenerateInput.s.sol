@@ -8,10 +8,6 @@ import { console } from "forge-std/console.sol";
 
 // Merkle tree input file generator script
 contract GenerateInput is Script {
-    // uint256 private constant _AMOUNT = 25 * 1e18;
-    // string[] private _types = new string[](2);
-    // uint256 private _count;
-    // string[] private _whitelist = new string[](4);
     struct Data {
         uint256 amount;
         address claimer;
@@ -25,20 +21,11 @@ contract GenerateInput is Script {
     string private constant _INPUT_DATA_PATH = "/script/target/data.json";
 
     function run() public {
-        // _types[0] = "address";
-        // _types[1] = "uint";
-        // _whitelist[0] = "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D";
-        // _whitelist[1] = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
-        // _whitelist[2] = "0x2ea3970Ed82D5b30be821FAAD4a731D35964F7dd";
-        // _whitelist[3] = "0xf6dBa02C01AF48Cf926579F77C9f874Ca640D91D";
-        // _count = _whitelist.length;
         string memory input = _createJSON();
         // write to the output file the stringified output json tree dumpus
         vm.writeFile(string.concat(vm.projectRoot(), _INPUT_PATH), input);
 
         console.log("DONE: The output is found at %s", _INPUT_PATH);
-
-        // _readData();
     }
 
     function _readData() private view {
@@ -56,9 +43,6 @@ contract GenerateInput is Script {
     }
 
     function _createJSON() private view returns (string memory) {
-        // string memory countString = vm.toString(_count); // convert count to string
-        // string memory amountString = vm.toString(_AMOUNT); // convert amount to string
-
         string memory data = vm.readFile(string.concat(vm.projectRoot(), _INPUT_DATA_PATH));
         bytes memory jsonData = vm.parseJson(data);
         DataJson memory datajson = abi.decode(jsonData, (DataJson));
